@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <title>Ptero Drive Backup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Wix+Madefor+Text:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">Ptero Drive</a>
+    <span class="pill">Backup otomatis</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div>
+        <p class="eyebrow">PTERODACTYL → GOOGLE DRIVE</p>
+        <h1>Backup panel tanpa buka terminal VPS.</h1>
+        <p class="lead">Login SSH sekali dari web, hubungkan Google Drive, pilih jadwal. Installer dan timer dibuat otomatis di VPS.</p>
+      </div>
+      <div class="hero-note">
+        <strong>Yang dibutuhkan</strong>
+        <p>Root SSH + password, Google OAuth Client untuk web ini, dan VPS berbasis Ubuntu/Debian/RHEL.</p>
+      </div>
+    </section>
+
+    <section class="layout">
+      <aside class="steps" aria-label="Tahapan setup">
+        <button class="step active" data-step-nav="1"><span>1</span><div><b>Login VPS</b><small>IP + password</small></div></button>
+        <button class="step" data-step-nav="2"><span>2</span><div><b>Google Drive</b><small>OAuth aman</small></div></button>
+        <button class="step" data-step-nav="3"><span>3</span><div><b>Jadwal</b><small>Jam / harian</small></div></button>
+        <button class="step" data-step-nav="4"><span>4</span><div><b>Selesai</b><small>Timer aktif</small></div></button>
+      </aside>
+
+      <div class="card main-card">
+        <div id="alert" class="alert hidden" role="status"></div>
+
+        <section class="panel active" data-panel="1">
+          <div class="section-head">
+            <div><p class="kicker">STEP 01</p><h2>Hubungkan VPS</h2></div>
+            <span class="status neutral" id="sshStatus">Belum login</span>
+          </div>
+          <p class="muted">Password hanya dipakai untuk membuka sesi SSH saat setup dan tidak ditulis ke file konfigurasi web.</p>
+
+          <div class="access-row">
+            <label class="field grow"><span>Access key web</span><input id="adminKey" type="password" autocomplete="current-password" placeholder="ADMIN_KEY"></label>
+            <button id="saveKey" class="button secondary compact" type="button">Simpan di perangkat</button>
+          </div>
+
+          <form id="sshForm" class="form-grid">
+            <label class="field wide"><span>IP / Host VPS</span><input id="host" required placeholder="103.123.45.67" autocomplete="off"></label>
+            <label class="field"><span>SSH Port</span><input id="port" type="number" min="1" max="65535" value="22" required></label>
+            <label class="field"><span>Username</span><input id="username" value="root" required autocomplete="username"></label>
+            <label class="field wide"><span>Password VPS</span><input id="password" type="password" required autocomplete="current-password" placeholder="••••••••••••"></label>
+            <button class="button primary wide" id="connectBtn" type="submit">Login & siapkan VPS</button>
+          </form>
+          <pre id="detect" class="terminal hidden"></pre>
+        </section>
+
+        <section class="panel" data-panel="2">
+          <div class="section-head">
+            <div><p class="kicker">STEP 02</p><h2>Hubungkan Google Drive</h2></div>
+            <span class="status neutral" id="driveStatus">Belum terhubung</span>
+          </div>
+          <p class="muted">Web meminta scope <code>drive.file</code>, jadi rclone hanya dapat melihat dan mengelola file/folder yang dibuat oleh aplikasi backup ini.</p>
+          <div class="drive-box">
+            <div class="drive-icon">G</div>
+            <div><b>Google Drive</b><p>Backup akan masuk ke folder PterodactylBackups.</p></div>
+            <button id="driveBtn" class="button primary" type="button">Hubungkan Drive</button>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="3">
+          <div class="section-head">
+            <div><p class="kicker">STEP 03</p><h2>Atur backup otomatis</h2></div>
+            <span class="status success">Drive siap</span>
+          </div>
+          <form id="configForm" class="form-grid">
+            <label class="field wide"><span>Isi backup</span>
+              <select id="backupScope">
+                <option value="full">Full — panel + DB + Wings + semua file server</option>
+                <option value="panel">Panel — panel + DB + konfigurasi saja</option>
+                <option value="servers">Servers — DB + semua file server</option>
+              </select>
+            </label>
+            <label class="field"><span>Jadwal</span>
+              <select id="schedule">
+                <option value="hourly">Setiap 1 jam</option>
+                <option value="every6h">Setiap 6 jam</option>
+                <option value="every12h">Setiap 12 jam</option>
+                <option value="daily" selected>Setiap hari</option>
+              </select>
+            </label>
+            <label class="field"><span>Simpan backup</span>
+              <select id="retentionDays">
+                <option value="3">3 hari</option>
+                <option value="7" selected>7 hari</option>
+                <option value="14">14 hari</option>
+                <option value="30">30 hari</option>
+              </select>
+            </label>
+            <label class="field"><span>Folder Drive</span><input id="remoteDir" value="PterodactylBackups"></label>
+            <label class="field"><span>Nama VPS</span><input id="hostLabel" placeholder="panel-utama"></label>
+            <label class="check wide"><input id="runNow" type="checkbox" checked><span><b>Jalankan backup pertama sekarang</b><small>Service dijalankan di background setelah setup.</small></span></label>
+            <button class="button primary wide" id="installBtn" type="submit">Aktifkan backup otomatis</button>
+          </form>
+        </section>
+
+        <section class="panel" data-panel="4">
+          <div class="done-mark">✓</div>
+          <p class="kicker">SETUP COMPLETE</p>
+          <h2>Backup otomatis sudah aktif.</h2>
+          <p class="muted">Kamu tidak perlu membuka SSH untuk menjalankan backup berikutnya. systemd timer di VPS yang akan menjalankannya.</p>
+          <div id="summary" class="summary"></div>
+          <button id="restartBtn" class="button secondary" type="button">Setup VPS lain</button>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <footer>Designed with BetaBotz-inspired tokens · Ptero Drive Backup</footer>
+  <script src="/app.js" defer></script>
+</body>
+</html>
